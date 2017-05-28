@@ -102,7 +102,21 @@ class SelectorCV(ModelSelector):
     '''
 
     def select(self):
-        warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-        # TODO implement model selection using CV
-        raise NotImplementedError
+        for num in range(self.min_n_components, self.max_n_components + 1):
+            model = self.base_model(num)
+            split_method = KFold()
+            scores = []
+            for cv_train_idx, cv_test_idx in split_method.split(self.sequences):
+                X_train, len_train = combine_sequences(cv_train_idx, self.sequences)
+                X_test, len_test = combine_sequences(cv_test_idx, self.sequences)
+                model.fit(X_train, len_train)
+                scores.append(model.score(X_test, len_test))
+            score = statistics.mean(scores)
+
+            if score > best_score:
+                best_score = score
+                best_model = model
+
+        return best_model
+

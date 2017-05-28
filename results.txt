@@ -1,0 +1,20 @@
+['polar-rr', 'polar-rtheta', 'polar-lr', 'polar-ltheta']
+Train fold indices:[2 3 4 5] Test fold indices:[0 1]
+Train fold indices:[0 1 4 5] Test fold indices:[2 3]
+Train fold indices:[0 1 2 3] Test fold indices:[4 5]
+
+['norm-rx', 'norm-ry', 'norm-lx', 'norm-ly']
+Train fold indices:[2 3 4 5] Test fold indices:[0 1]
+Train fold indices:[0 1 4 5] Test fold indices:[2 3]
+Train fold indices:[0 1 2 3] Test fold indices:[4 5]
+
+['grnd-rx', 'grnd-ry', 'grnd-lx', 'grnd-ly']
+Train fold indices:[2 3 4 5] Test fold indices:[0 1]
+Train fold indices:[0 1 4 5] Test fold indices:[2 3]
+Train fold indices:[0 1 2 3] Test fold indices:[4 5]
+
+['hand-dist-x', 'hand-dist-y', 'hand-dist', 'hand-angle']
+Train fold indices:[2 3 4 5] Test fold indices:[0 1]
+Train fold indices:[0 1 4 5] Test fold indices:[2 3]
+Train fold indices:[0 1 2 3] Test fold indices:[4 5]
+
