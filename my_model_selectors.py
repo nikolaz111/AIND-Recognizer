@@ -13,7 +13,8 @@ class ModelSelector(object):
     base class for model selection (strategy design pattern)
     '''
 
-    def __init__(self, all_word_sequences: dict, all_word_Xlengths: dict, this_word: str,
+    def __init__(self, all_word_sequences: dict, all_word_Xlengths: dict,
+                 this_word: str,
                  n_constant=3,
                  min_n_components=2, max_n_components=10,
                  random_state=14, verbose=False):
@@ -36,14 +37,18 @@ class ModelSelector(object):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
         # warnings.filterwarnings("ignore", category=RuntimeWarning)
         try:
-            hmm_model = GaussianHMM(n_components=num_states, covariance_type="diag", n_iter=1000,
-                                    random_state=self.random_state, verbose=False).fit(self.X, self.lengths)
+            hmm_model = GaussianHMM(n_components=num_states,
+                                    covariance_type="diag", n_iter=1000,
+                                    random_state=self.random_state,
+                                    verbose=False).fit(self.X, self.lengths)
             if self.verbose:
-                print("model created for {} with {} states".format(self.this_word, num_states))
+                print("model created for {} with {} states".format(
+                    self.this_word, num_states))
             return hmm_model
         except:
             if self.verbose:
-                print("failure on {} with {} states".format(self.this_word, num_states))
+                print("failure on {} with {} states".format(self.this_word,
+                                                            num_states))
             return None
 
 
@@ -74,10 +79,24 @@ class SelectorBIC(ModelSelector):
 
         :return: GaussianHMM object
         """
-        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        best_score = float('inf')
+        best_model = self.base_model(self.min_n_components)
 
-        # TODO implement model selection based on BIC scores
-        raise NotImplementedError
+        for num in range(self.min_n_components, self.max_n_components + 1):
+            try:
+                model = self.base_model(num)
+                log_l = model.score(self.X, self.lengths)
+                log_n = np.log(self.X.shape[0])
+                p = num * (num - 1) + 2 * self.X.shape[1] * num
+                score = -2 * log_l + p * log_n
+
+                if score < best_score:
+                    best_score = score
+                    best_model = model
+            except:
+                pass
+
+        return best_model
 
 
 class SelectorDIC(ModelSelector):
@@ -90,10 +109,28 @@ class SelectorDIC(ModelSelector):
     '''
 
     def select(self):
-        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        best_score = float('-inf')
+        best_model = self.base_model(self.min_n_components)
 
-        # TODO implement model selection based on DIC scores
-        raise NotImplementedError
+        for num in range(self.min_n_components, self.max_n_components + 1):
+            try:
+                model = self.base_model(num)
+                log_l = model.score(self.X, self.lengths)
+
+                scores = [model.score(x[0], x[1]) for w, x in
+                          self.hwords.items() if w != self.this_word]
+
+                term = (1 / (len(self.hwords) - 1)) * sum(scores)
+
+                score = log_l - term
+
+                if score > best_score:
+                    best_score = score
+                    best_model = model
+            except:
+                pass
+
+        return best_model
 
 
 class SelectorCV(ModelSelector):
@@ -102,21 +139,28 @@ class SelectorCV(ModelSelector):
     '''
 
     def select(self):
+        best_score = float('-inf')
+        best_model = self.base_model(self.min_n_components)
 
         for num in range(self.min_n_components, self.max_n_components + 1):
-            model = self.base_model(num)
-            split_method = KFold()
-            scores = []
-            for cv_train_idx, cv_test_idx in split_method.split(self.sequences):
-                X_train, len_train = combine_sequences(cv_train_idx, self.sequences)
-                X_test, len_test = combine_sequences(cv_test_idx, self.sequences)
-                model.fit(X_train, len_train)
-                scores.append(model.score(X_test, len_test))
-            score = statistics.mean(scores)
+            try:
+                model = self.base_model(num)
+                scores = []
+                split_method = KFold()
+                split = split_method.split(self.sequences)
+                for cv_train_idx, cv_test_idx in split:
+                    x_train, len_train = combine_sequences(cv_train_idx,
+                                                           self.sequences)
+                    x_test, len_test = combine_sequences(cv_test_idx,
+                                                         self.sequences)
+                    model.fit(x_train, len_train)
+                    scores.append(model.score(x_test, len_test))
+                score = statistics.mean(scores)
 
-            if score > best_score:
-                best_score = score
-                best_model = model
+                if score > best_score:
+                    best_score = score
+                    best_model = model
+            except:
+                pass
 
         return best_model
-
